@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../providers/posts_provider.dart';
 import '../widgets/post_card.dart';
 import '../widgets/status_timeline.dart';
+import '../widgets/interactive_roadmap.dart';
 import '../core/theme.dart';
 import '../core/constants.dart';
 
@@ -27,7 +28,9 @@ class _MyPostsPageState extends ConsumerState<MyPostsPage> {
     // Load user posts
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = ref.read(authProvider);
+      print('MyPostsPage: initState - authState.user: ${authState.user?.id}');
       if (authState.user != null) {
+        print('MyPostsPage: Calling fetchUserPosts for userId: ${authState.user!.id}');
         ref.read(userPostsProvider(authState.user!.id).notifier).fetchUserPosts(refresh: true);
       }
     });
@@ -56,6 +59,9 @@ class _MyPostsPageState extends ConsumerState<MyPostsPage> {
     final userPostsState = authState.user != null 
         ? ref.watch(userPostsProvider(authState.user!.id))
         : null;
+    
+    print('MyPostsPage: build - authState.user: ${authState.user?.id}');
+    print('MyPostsPage: build - userPostsState: ${userPostsState?.posts.length} posts, isLoading: ${userPostsState?.isLoading}, error: ${userPostsState?.error}');
     
     if (authState.user == null) {
       return Scaffold(
@@ -122,7 +128,7 @@ class _MyPostsPageState extends ConsumerState<MyPostsPage> {
   Widget _buildFilterTabs() {
     return Container(
       height: 50,
-      color: Colors.white,
+      color: AppTheme.backgroundColor,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -146,13 +152,16 @@ class _MyPostsPageState extends ConsumerState<MyPostsPage> {
         margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryColor : Colors.grey[100],
+          color: isSelected ? AppTheme.secondaryColor : AppTheme.cardColor,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppTheme.secondaryColor : AppTheme.borderColor,
+          ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : AppTheme.textPrimaryColor,
+            color: isSelected ? Colors.black : AppTheme.textPrimaryColor,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
@@ -285,14 +294,29 @@ class _MyPostsPageState extends ConsumerState<MyPostsPage> {
   }
   
   Widget _buildPostCard(post) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: InkWell(
-        onTap: () => context.push('/post/${post.id}'),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor.withOpacity(0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push('/post/${post.id}'),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
@@ -328,10 +352,17 @@ class _MyPostsPageState extends ConsumerState<MyPostsPage> {
               
               const SizedBox(height: 12),
               
-              // Status Timeline
-              StatusTimeline(
+              // Interactive Roadmap
+              InteractiveRoadmap(
                 currentStatus: post.status,
                 statuses: AppConstants.postStatuses,
+                timestamps: post.roadmapSteps.map((step) => step.timestamp).where((t) => t != null).cast<DateTime>().toList(),
+                descriptions: post.roadmapSteps.map((step) => step.description).toList(),
+                isInteractive: true,
+                onStatusTap: (status) {
+                  // Show detailed information about the status
+                  _showStatusDetails(context, status, post);
+                },
               ),
               
               const SizedBox(height: 12),
@@ -388,6 +419,7 @@ class _MyPostsPageState extends ConsumerState<MyPostsPage> {
                 ],
               ),
             ],
+            ),
           ),
         ),
       ),
@@ -396,10 +428,19 @@ class _MyPostsPageState extends ConsumerState<MyPostsPage> {
   
   Widget _buildCategoryChip(String category) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: AppTheme.primaryColor.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Text(
         category,
@@ -414,10 +455,19 @@ class _MyPostsPageState extends ConsumerState<MyPostsPage> {
   Widget _buildSeverityChip(String severity) {
     final color = AppTheme.getSeverityColor(severity);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Text(
         severity,
@@ -432,10 +482,19 @@ class _MyPostsPageState extends ConsumerState<MyPostsPage> {
   Widget _buildStatusChip(String status) {
     final color = AppTheme.getStatusColor(status);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Text(
         status,
@@ -447,6 +506,110 @@ class _MyPostsPageState extends ConsumerState<MyPostsPage> {
     );
   }
   
+  void _showStatusDetails(BuildContext context, String status, post) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Status: $status'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _getStatusDescription(status),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            if (post.roadmapSteps.isNotEmpty) ...[
+              Text(
+                'Progress Details:',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...post.roadmapSteps.map((step) => Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.cardColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.borderColor),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      step.status,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.getStatusColor(step.status),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      step.description,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    if (step.timestamp != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Updated: ${_formatTimestamp(step.timestamp!)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.textSecondaryColor,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              )),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  String _getStatusDescription(String status) {
+    switch (status.toLowerCase()) {
+      case 'reported':
+        return 'Your issue has been successfully reported and is now in the system. BBMP officials will review it soon.';
+      case 'under review':
+        return 'BBMP officials are currently reviewing your issue to assess its priority and determine the appropriate action.';
+      case 'assigned':
+        return 'Your issue has been assigned to a specific department or team who will handle the resolution.';
+      case 'in progress':
+        return 'Work is actively being done to resolve your issue. You may receive updates from the assigned team.';
+      case 'resolved':
+        return 'Your issue has been successfully resolved! Thank you for helping improve our community.';
+      case 'closed':
+        return 'This issue has been closed and archived. If you have any concerns, please create a new report.';
+      default:
+        return 'Status update information is not available.';
+    }
+  }
+  
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+    
+    if (difference.inDays > 0) {
+      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
   Widget _buildBottomNavigationBar(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,

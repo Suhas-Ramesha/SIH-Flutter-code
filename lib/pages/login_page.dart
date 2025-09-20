@@ -99,7 +99,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 // Login Type Toggle
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.cardColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppTheme.borderColor),
                   ),
@@ -111,14 +111,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
-                              color: _isUserLogin ? AppTheme.primaryColor : Colors.transparent,
+                              color: _isUserLogin ? AppTheme.secondaryColor : Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               'Login as User',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: _isUserLogin ? Colors.white : AppTheme.textPrimaryColor,
+                                color: _isUserLogin ? Colors.black : AppTheme.textPrimaryColor,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -131,14 +131,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
-                              color: !_isUserLogin ? AppTheme.primaryColor : Colors.transparent,
+                              color: !_isUserLogin ? AppTheme.secondaryColor : Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               'Login as Admin',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: !_isUserLogin ? Colors.white : AppTheme.textPrimaryColor,
+                                color: !_isUserLogin ? Colors.black : AppTheme.textPrimaryColor,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

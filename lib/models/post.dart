@@ -1,3 +1,51 @@
+/// Roadmap step model for tracking issue resolution progress
+class RoadmapStep {
+  final String status;
+  final String description;
+  final DateTime? timestamp;
+  final String? assignedTo;
+  final List<String>? attachments;
+  
+  const RoadmapStep({
+    required this.status,
+    required this.description,
+    this.timestamp,
+    this.assignedTo,
+    this.attachments,
+  });
+  
+  /// Create a RoadmapStep from JSON
+  factory RoadmapStep.fromJson(Map<String, dynamic> json) {
+    return RoadmapStep(
+      status: json['status'] as String,
+      description: json['description'] as String,
+      timestamp: json['timestamp'] != null ? DateTime.parse(json['timestamp'] as String) : null,
+      assignedTo: json['assignedTo'] as String?,
+      attachments: List<String>.from(json['attachments'] as List? ?? []),
+    );
+  }
+  
+  /// Convert RoadmapStep to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'status': status,
+      'description': description,
+      'timestamp': timestamp?.toIso8601String(),
+      'assignedTo': assignedTo,
+      'attachments': attachments,
+    };
+  }
+  
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is RoadmapStep && other.status == status;
+  }
+  
+  @override
+  int get hashCode => status.hashCode;
+}
+
 /// Post model representing a civic report
 class Post {
   final String id;
@@ -23,6 +71,7 @@ class Post {
   final DateTime? assignedAt;
   final DateTime? resolvedAt;
   final Map<String, dynamic>? metadata;
+  final List<RoadmapStep> roadmapSteps;
   
   const Post({
     required this.id,
@@ -48,6 +97,7 @@ class Post {
     this.assignedAt,
     this.resolvedAt,
     this.metadata,
+    this.roadmapSteps = const [],
   });
   
   /// Create a Post from JSON
@@ -80,6 +130,9 @@ class Post {
       assignedAt: json['assignedAt'] != null ? DateTime.parse(json['assignedAt'] as String) : null,
       resolvedAt: json['resolvedAt'] != null ? DateTime.parse(json['resolvedAt'] as String) : null,
       metadata: json['metadata'] as Map<String, dynamic>?,
+      roadmapSteps: (json['roadmapSteps'] as List? ?? [])
+          .map((step) => RoadmapStep.fromJson(step as Map<String, dynamic>))
+          .toList(),
     );
   }
   
@@ -108,6 +161,7 @@ class Post {
       'assignedAt': assignedAt?.toIso8601String(),
       'resolvedAt': resolvedAt?.toIso8601String(),
       'metadata': metadata,
+      'roadmapSteps': roadmapSteps.map((step) => step.toJson()).toList(),
     };
   }
   
@@ -136,6 +190,7 @@ class Post {
     DateTime? assignedAt,
     DateTime? resolvedAt,
     Map<String, dynamic>? metadata,
+    List<RoadmapStep>? roadmapSteps,
   }) {
     return Post(
       id: id ?? this.id,
@@ -161,6 +216,7 @@ class Post {
       assignedAt: assignedAt ?? this.assignedAt,
       resolvedAt: resolvedAt ?? this.resolvedAt,
       metadata: metadata ?? this.metadata,
+      roadmapSteps: roadmapSteps ?? this.roadmapSteps,
     );
   }
   

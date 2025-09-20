@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import '../providers/notifications_provider.dart';
+import '../widgets/notification_card.dart';
 import '../core/theme.dart';
 import '../core/mock_data.dart';
 
@@ -12,10 +14,25 @@ class InboxPage extends ConsumerStatefulWidget {
   ConsumerState<InboxPage> createState() => _InboxPageState();
 }
 
-class _InboxPageState extends ConsumerState<InboxPage> {
+class _InboxPageState extends ConsumerState<InboxPage> with TickerProviderStateMixin {
+  late TabController _tabController;
+  
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+  
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+  
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final notificationsState = ref.watch(notificationsProvider);
     
     if (authState.user == null) {
       return Scaffold(
@@ -30,6 +47,18 @@ class _InboxPageState extends ConsumerState<InboxPage> {
       appBar: AppBar(
         title: const Text('Inbox'),
         actions: [
+          // Mark all as read button
+          if (notificationsState.unreadCount > 0)
+            IconButton(
+              icon: const Icon(Icons.mark_email_read),
+              onPressed: () {
+                ref.read(notificationsProvider.notifier).markAllAsRead();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('All notifications marked as read')),
+                );
+              },
+              tooltip: 'Mark all as read',
+            ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -40,9 +69,253 @@ class _InboxPageState extends ConsumerState<InboxPage> {
             },
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.notifications),
+                  const SizedBox(width: 8),
+                  const Text('Notifications'),
+                  if (notificationsState.unreadCount > 0) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.secondaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${notificationsState.unreadCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.admin_panel_settings),
+                  SizedBox(width: 8),
+                  Text('BBMP'),
+                ],
+              ),
+            ),
+            const Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.people),
+                  SizedBox(width: 8),
+                  Text('Community'),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      body: _buildConversationsList(),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildNotificationsTab(),
+          _buildBbmpTab(),
+          _buildCommunityTab(),
+        ],
+      ),
       bottomNavigationBar: _buildBottomNavigationBar(context),
+    );
+  }
+  
+  Widget _buildNotificationsTab() {
+    final notificationsState = ref.watch(notificationsProvider);
+    
+    if (notificationsState.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (notificationsState.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: AppTheme.errorColor,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load notifications',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              notificationsState.error!,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.textSecondaryColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                ref.read(notificationsProvider.notifier).refreshNotifications();
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    if (notificationsState.notifications.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.notifications_none,
+              size: 64,
+              color: AppTheme.textSecondaryColor,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No notifications yet',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You\'ll receive notifications when people interact with your posts',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.textSecondaryColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return RefreshIndicator(
+      onRefresh: () => ref.read(notificationsProvider.notifier).refreshNotifications(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: notificationsState.notifications.length,
+        itemBuilder: (context, index) {
+          final notification = notificationsState.notifications[index];
+          return NotificationCard(
+            notification: notification,
+            onTap: () {
+              // Navigate to post or show details
+              if (notification.postId != null) {
+                context.push('/post/${notification.postId}');
+              }
+            },
+            onMarkAsRead: () {
+              ref.read(notificationsProvider.notifier).markAsRead(notification.id);
+            },
+          );
+        },
+      ),
+    );
+  }
+  
+  Widget _buildBbmpTab() {
+    // Get BBMP conversations
+    final conversations = MockData.getConversationsForUser('u1').where((conv) => 
+        conv['username'].toLowerCase().contains('bbmp') || 
+        conv['username'].toLowerCase().contains('admin')
+    ).toList();
+    
+    if (conversations.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.admin_panel_settings_outlined,
+              size: 64,
+              color: AppTheme.textSecondaryColor,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No BBMP messages yet',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'BBMP officials will contact you here about your reports',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.textSecondaryColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: conversations.length,
+      itemBuilder: (context, index) {
+        final conversation = conversations[index];
+        return _buildConversationCard(conversation, isBbmp: true);
+      },
+    );
+  }
+  
+  Widget _buildCommunityTab() {
+    // Get community conversations (non-BBMP)
+    final conversations = MockData.getConversationsForUser('u1').where((conv) => 
+        !conv['username'].toLowerCase().contains('bbmp') && 
+        !conv['username'].toLowerCase().contains('admin')
+    ).toList();
+    
+    if (conversations.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.people_outline,
+              size: 64,
+              color: AppTheme.textSecondaryColor,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No community messages yet',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Connect with people from your community here',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.textSecondaryColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: conversations.length,
+      itemBuilder: (context, index) {
+        final conversation = conversations[index];
+        return _buildConversationCard(conversation, isBbmp: false);
+      },
     );
   }
   
@@ -88,27 +361,59 @@ class _InboxPageState extends ConsumerState<InboxPage> {
     );
   }
   
-  Widget _buildConversationCard(Map<String, dynamic> conversation) {
+  Widget _buildConversationCard(Map<String, dynamic> conversation, {bool isBbmp = false}) {
     final hasUnread = conversation['unreadCount'] > 0;
     
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: hasUnread ? AppTheme.primaryColor : Colors.grey,
-          child: Text(
-            conversation['username'].substring(0, 1).toUpperCase(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          backgroundColor: isBbmp 
+              ? (hasUnread ? AppTheme.primaryColor : AppTheme.primaryColor.withOpacity(0.7))
+              : (hasUnread ? AppTheme.secondaryColor : Colors.grey),
+          child: isBbmp 
+              ? const Icon(
+                  Icons.admin_panel_settings,
+                  color: Colors.white,
+                  size: 20,
+                )
+              : Text(
+                  conversation['username'].substring(0, 1).toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
         ),
-        title: Text(
-          conversation['username'],
-          style: TextStyle(
-            fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
-          ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                conversation['username'],
+                style: TextStyle(
+                  fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+            if (isBbmp) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'BBMP',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
         subtitle: Text(
           conversation['lastMessage'],

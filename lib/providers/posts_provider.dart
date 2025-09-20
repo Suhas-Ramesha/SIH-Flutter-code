@@ -396,6 +396,8 @@ class UserPostsNotifier extends StateNotifier<UserPostsState> {
   
   /// Fetch user posts
   Future<void> fetchUserPosts({bool refresh = false}) async {
+    print('UserPostsNotifier: fetchUserPosts called for userId: $userId, refresh: $refresh');
+    
     if (refresh) {
       state = state.copyWith(
         isLoading: true,
@@ -415,6 +417,11 @@ class UserPostsNotifier extends StateNotifier<UserPostsState> {
         limit: 20,
       );
       
+      print('UserPostsNotifier: Fetched ${fetchedPosts.length} posts for userId: $userId');
+      for (final post in fetchedPosts) {
+        print('UserPostsNotifier: Post ${post.id} - ${post.title}');
+      }
+      
       state = state.copyWith(
         posts: refresh ? fetchedPosts : [...state.posts, ...fetchedPosts],
         isLoading: false,
@@ -423,6 +430,7 @@ class UserPostsNotifier extends StateNotifier<UserPostsState> {
       );
       
     } catch (e) {
+      print('UserPostsNotifier: Error fetching posts: $e');
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),

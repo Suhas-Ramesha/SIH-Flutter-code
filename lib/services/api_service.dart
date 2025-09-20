@@ -222,6 +222,13 @@ class MockApiService implements ApiService {
       createdAt: DateTime.now(),
       comments: [],
       bbmpNotes: [],
+      roadmapSteps: [
+        RoadmapStep(
+          status: 'Reported',
+          description: 'Issue has been reported and is awaiting review',
+          timestamp: DateTime.now(),
+        ),
+      ],
     );
     
     return newPost;
@@ -337,23 +344,36 @@ class MockApiService implements ApiService {
   
   @override
   Future<List<Post>> fetchUserPosts(String userId, {int page = 1, int limit = 20}) async {
+    print('ApiService: fetchUserPosts called for userId: $userId, page: $page, limit: $limit');
+    
     await Future.delayed(const Duration(milliseconds: 600));
     
     final mockPosts = await _getMockPosts();
+    print('ApiService: Total mock posts: ${mockPosts.length}');
+    
     final userPosts = mockPosts.where((post) => post.userId == userId).toList();
+    print('ApiService: Posts for userId $userId: ${userPosts.length}');
+    
+    for (final post in userPosts) {
+      print('ApiService: Post ${post.id} - ${post.title} (userId: ${post.userId})');
+    }
     
     // Apply pagination
     final startIndex = (page - 1) * limit;
     final endIndex = startIndex + limit;
     
     if (startIndex >= userPosts.length) {
+      print('ApiService: No posts to return (startIndex: $startIndex, userPosts.length: ${userPosts.length})');
       return [];
     }
     
-    return userPosts.sublist(
+    final result = userPosts.sublist(
       startIndex,
       endIndex > userPosts.length ? userPosts.length : endIndex,
     );
+    
+    print('ApiService: Returning ${result.length} posts');
+    return result;
   }
   
   @override

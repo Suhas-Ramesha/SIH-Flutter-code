@@ -1,5 +1,6 @@
 import '../models/user.dart';
 import '../models/post.dart';
+import '../models/notification.dart';
 
 /// Mock data for development and testing
 /// 
@@ -111,6 +112,13 @@ class MockData {
       createdAt: DateTime.parse('2025-07-01T08:30:00Z'),
       comments: [],
       bbmpNotes: [],
+      roadmapSteps: [
+        RoadmapStep(
+          status: 'Reported',
+          description: 'Issue has been reported and is awaiting review',
+          timestamp: DateTime.parse('2025-07-01T08:30:00Z'),
+        ),
+      ],
     ),
     Post(
       id: 'p2',
@@ -138,6 +146,18 @@ class MockData {
           text: 'Report received and under review',
           createdAt: DateTime(2025, 7, 2, 11, 0),
           attachments: [],
+        ),
+      ],
+      roadmapSteps: [
+        RoadmapStep(
+          status: 'Reported',
+          description: 'Issue has been reported and is awaiting review',
+          timestamp: DateTime.parse('2025-07-02T10:00:00Z'),
+        ),
+        RoadmapStep(
+          status: 'Under Review',
+          description: 'BBMP officials are reviewing the issue',
+          timestamp: DateTime.parse('2025-07-02T11:00:00Z'),
         ),
       ],
     ),
@@ -178,6 +198,23 @@ class MockData {
           attachments: [],
         ),
       ],
+      roadmapSteps: [
+        RoadmapStep(
+          status: 'Reported',
+          description: 'Issue has been reported and is awaiting review',
+          timestamp: DateTime.parse('2025-07-03T07:20:00Z'),
+        ),
+        RoadmapStep(
+          status: 'Under Review',
+          description: 'BBMP officials are reviewing the issue',
+          timestamp: DateTime.parse('2025-07-03T07:45:00Z'),
+        ),
+        RoadmapStep(
+          status: 'Assigned',
+          description: 'Issue has been assigned to a department',
+          timestamp: DateTime.parse('2025-07-03T08:00:00Z'),
+        ),
+      ],
     ),
     Post(
       id: 'p4',
@@ -197,6 +234,13 @@ class MockData {
       createdAt: DateTime.parse('2025-07-03T11:05:00Z'),
       comments: [],
       bbmpNotes: [],
+      roadmapSteps: [
+        RoadmapStep(
+          status: 'Reported',
+          description: 'Issue has been reported and is awaiting review',
+          timestamp: DateTime.parse('2025-07-03T11:05:00Z'),
+        ),
+      ],
     ),
     Post(
       id: 'p5',
@@ -235,6 +279,28 @@ class MockData {
           attachments: [],
         ),
       ],
+      roadmapSteps: [
+        RoadmapStep(
+          status: 'Reported',
+          description: 'Issue has been reported and is awaiting review',
+          timestamp: DateTime.parse('2025-06-30T16:45:00Z'),
+        ),
+        RoadmapStep(
+          status: 'Under Review',
+          description: 'BBMP officials are reviewing the issue',
+          timestamp: DateTime.parse('2025-06-30T17:00:00Z'),
+        ),
+        RoadmapStep(
+          status: 'Assigned',
+          description: 'Issue has been assigned to a department',
+          timestamp: DateTime.parse('2025-07-01T07:30:00Z'),
+        ),
+        RoadmapStep(
+          status: 'In Progress',
+          description: 'Work is currently being done to resolve the issue',
+          timestamp: DateTime.parse('2025-07-01T08:00:00Z'),
+        ),
+      ],
     ),
     Post(
       id: 'p6',
@@ -254,6 +320,13 @@ class MockData {
       createdAt: DateTime.parse('2025-07-04T09:00:00Z'),
       comments: [],
       bbmpNotes: [],
+      roadmapSteps: [
+        RoadmapStep(
+          status: 'Reported',
+          description: 'Issue has been reported and is awaiting review',
+          timestamp: DateTime.parse('2025-07-04T09:00:00Z'),
+        ),
+      ],
     ),
     Post(
       id: 'p7',
@@ -290,6 +363,23 @@ class MockData {
           text: 'Safety barriers installed',
           createdAt: DateTime(2025, 6, 29, 8, 0),
           attachments: [],
+        ),
+      ],
+      roadmapSteps: [
+        RoadmapStep(
+          status: 'Reported',
+          description: 'Issue has been reported and is awaiting review',
+          timestamp: DateTime.parse('2025-06-29T06:15:00Z'),
+        ),
+        RoadmapStep(
+          status: 'Under Review',
+          description: 'BBMP officials are reviewing the issue',
+          timestamp: DateTime.parse('2025-06-29T06:30:00Z'),
+        ),
+        RoadmapStep(
+          status: 'Assigned',
+          description: 'Issue has been assigned to a department',
+          timestamp: DateTime.parse('2025-06-29T07:00:00Z'),
         ),
       ],
     ),
@@ -337,6 +427,33 @@ class MockData {
           text: 'Traffic restored',
           createdAt: DateTime(2025, 6, 28, 17, 0),
           attachments: [],
+        ),
+      ],
+      roadmapSteps: [
+        RoadmapStep(
+          status: 'Reported',
+          description: 'Issue has been reported and is awaiting review',
+          timestamp: DateTime.parse('2025-06-28T14:00:00Z'),
+        ),
+        RoadmapStep(
+          status: 'Under Review',
+          description: 'BBMP officials are reviewing the issue',
+          timestamp: DateTime.parse('2025-06-28T14:15:00Z'),
+        ),
+        RoadmapStep(
+          status: 'Assigned',
+          description: 'Issue has been assigned to a department',
+          timestamp: DateTime.parse('2025-06-28T14:30:00Z'),
+        ),
+        RoadmapStep(
+          status: 'In Progress',
+          description: 'Work is currently being done to resolve the issue',
+          timestamp: DateTime.parse('2025-06-28T14:45:00Z'),
+        ),
+        RoadmapStep(
+          status: 'Resolved',
+          description: 'Issue has been successfully resolved',
+          timestamp: DateTime.parse('2025-06-28T16:00:00Z'),
         ),
       ],
     ),
@@ -579,5 +696,111 @@ class MockData {
     final categoryPosts = getPostsByCategory(category);
     final postIds = categoryPosts.map((post) => post.id).toSet();
     return mockMapMarkers.where((marker) => postIds.contains(marker['postId'])).toList();
+  }
+  
+  // Mock Notifications
+  static final List<NotificationModel> mockNotifications = [
+    NotificationFactory.createLikeNotification(
+      id: 'n1',
+      userId: 'u1',
+      postId: 'p1',
+      postTitle: 'Broken Street Light',
+      fromUserId: 'u2',
+      fromUsername: 'Ravi',
+      fromUserAvatar: 'https://via.placeholder.com/40',
+    ),
+    NotificationFactory.createUpvoteNotification(
+      id: 'n2',
+      userId: 'u1',
+      postId: 'p1',
+      postTitle: 'Broken Street Light',
+      fromUserId: 'u3',
+      fromUsername: 'Priya',
+      fromUserAvatar: 'https://via.placeholder.com/40',
+    ),
+    NotificationFactory.createCommentNotification(
+      id: 'n3',
+      userId: 'u1',
+      postId: 'p1',
+      postTitle: 'Broken Street Light',
+      fromUserId: 'u4',
+      fromUsername: 'Kumar',
+      fromUserAvatar: 'https://via.placeholder.com/40',
+      commentText: 'I\'ve seen this issue too. It\'s been there for weeks!',
+    ),
+    NotificationFactory.createStatusUpdateNotification(
+      id: 'n4',
+      userId: 'u1',
+      postId: 'p1',
+      postTitle: 'Broken Street Light',
+      newStatus: 'Under Review',
+    ),
+    NotificationFactory.createBbmpMessageNotification(
+      id: 'n5',
+      userId: 'u1',
+      message: 'We have received your report and are currently reviewing it. We will update you soon.',
+      fromAdminName: 'BBMP Admin',
+    ),
+    NotificationFactory.createLikeNotification(
+      id: 'n6',
+      userId: 'u1',
+      postId: 'p2',
+      postTitle: 'Pothole on Main Road',
+      fromUserId: 'u5',
+      fromUsername: 'Meera',
+      fromUserAvatar: 'https://via.placeholder.com/40',
+    ),
+    NotificationFactory.createUpvoteNotification(
+      id: 'n7',
+      userId: 'u1',
+      postId: 'p2',
+      postTitle: 'Pothole on Main Road',
+      fromUserId: 'u2',
+      fromUsername: 'Ravi',
+      fromUserAvatar: 'https://via.placeholder.com/40',
+    ),
+    NotificationFactory.createStatusUpdateNotification(
+      id: 'n8',
+      userId: 'u1',
+      postId: 'p2',
+      postTitle: 'Pothole on Main Road',
+      newStatus: 'In Progress',
+    ),
+    NotificationFactory.createCommunityMessageNotification(
+      id: 'n9',
+      userId: 'u1',
+      message: 'Hey! I live in the same area. Let\'s work together to get this fixed.',
+      fromUserId: 'u3',
+      fromUsername: 'Priya',
+      fromUserAvatar: 'https://via.placeholder.com/40',
+    ),
+    NotificationFactory.createLikeNotification(
+      id: 'n10',
+      userId: 'u1',
+      postId: 'p3',
+      postTitle: 'Garbage Collection Issue',
+      fromUserId: 'u4',
+      fromUsername: 'Kumar',
+      fromUserAvatar: 'https://via.placeholder.com/40',
+    ),
+  ];
+  
+  /// Get notifications for a specific user
+  static List<NotificationModel> getNotificationsForUser(String userId) {
+    return mockNotifications.where((notification) => notification.userId == userId).toList();
+  }
+  
+  /// Get unread notifications for a specific user
+  static List<NotificationModel> getUnreadNotificationsForUser(String userId) {
+    return mockNotifications
+        .where((notification) => notification.userId == userId && !notification.isRead)
+        .toList();
+  }
+  
+  /// Get notifications by type for a specific user
+  static List<NotificationModel> getNotificationsByTypeForUser(String userId, String type) {
+    return mockNotifications
+        .where((notification) => notification.userId == userId && notification.type == type)
+        .toList();
   }
 }
